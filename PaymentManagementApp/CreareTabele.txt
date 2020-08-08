@@ -1,0 +1,66 @@
+Create table Angajati(Nr_crt integer PRIMARY KEY,
+			Nume varchar(50),
+			Prenume varchar(50),
+			Functie varchar(50),
+			Salar_baza integer,
+			Spor integer default 0,
+			Premii_brute integer,
+			Total_brut integer,
+			Brut_impozabil integer,
+			Impozit integer,
+			CAS integer,
+			CASS integer,
+			Retineri integer default 0,
+			Virat_card integer
+			);
+
+Create table Impozit(Impozit integer default 10,
+			  CAS integer default 25,
+			  CASS integer default 10,
+			  Parola varchar(10));
+
+
+CREATE SEQUENCE ids MINVALUE 1 START WITH 1 INCREMENT BY 1;
+CREATE OR REPLACE TRIGGER table_increment
+BEFORE INSERT ON Angajati 
+FOR EACH ROW
+
+BEGIN
+  SELECT ids.NEXTVAL
+  INTO   :new.nr_crt
+  FROM   dual;
+END;
+/
+
+
+create or replace trigger CalculSalariu
+before insert or update on tabelAngajati
+for each row
+declare
+totalBrutvar integer;
+brutImpozabilvar integer;
+impozitvar integer;
+casvar integer;
+cassvar integer;
+viratCardvar integer;
+procenteImpozit integer;
+procenteCas integer;
+procenteCass integer;
+begin
+
+select Impozit, CAS, CASS into procenteImpozit, procenteCAS, procenteCASS from tabelImpozit;
+totalBrutvar :=:NEW.salar_baza*(1 + :NEW.spor/100) + :NEW.premii_brute;
+casvar := totalBrutvar * (procenteCAS/100);
+cassvar := totalBrutvar * (procenteCASS/100);
+brutImpozabilvar := totalBrutvar - casvar - cassvar;
+impozitvar := brutImpozabilvar * (procenteImpozit/100);
+viratCardvar := totalBrutvar - impozitvar - casvar - cassvar - :NEW.retineri;
+
+:NEW.total_brut := totalBrutvar;
+:NEW.brut_impozabil := brutImpozabilvar;
+:NEW.impozit := impozitvar;
+:NEW.cas := casvar;
+:NEW.cass := cassvar;
+:NEW.virat_card := viratCardvar;
+end;
+/
